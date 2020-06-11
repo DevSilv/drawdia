@@ -111,16 +111,20 @@ class DiagramArea {
 					"drop",
 					event => {
 						// Handle dragging (drop)
-						const cursorPagePosition = {
-							x: event.pageX,
-							y: event.pageY
+
+						const cursorClientPosition = {
+							x: event.clientX,
+							y: event.clientY
 						};
+
 						const elemToDropOnto = event.currentTarget;
+
 						state.draggingStore.endDragging(
-							elemToDropOnto, cursorPagePosition
+							elemToDropOnto, cursorClientPosition
 						);
 
 						// Handle selection after dragging
+
 						const draggedItem = state.draggingStore.getItem();
 						draggedItem.select();
 					}

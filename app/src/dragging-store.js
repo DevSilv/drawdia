@@ -1,27 +1,42 @@
 class DraggingStore {
 	static create() {
 		let item = undefined;
-		const cursorShift = { width: 0, height: 0 };
+		const shift = {
+			horizontal: 0,
+			vertical: 0
+		};
 
 		return {
 			getItem: () => item,
 			startDragging:
-				(dragStartPosition, itemToDrag) =>
-					dragStartPosition
+				(dragStartClientPosition, itemToDrag, elemToDropOnto) =>
+					dragStartClientPosition
 					&& itemToDrag
+					&& elemToDropOnto
 					&& (() => {
-						const elemToDrag = itemToDrag.getElem();
+						const elemToDropOntoBoundingClientRect
+							= elemToDropOnto.getBoundingClientRect();
+						const elemToDropOntoClientPosition = {
+							x: elemToDropOntoBoundingClientRect.left,
+							y: elemToDropOntoBoundingClientRect.top
+						};
 
-						const elemToDragPosition = {
-							x: elemToDrag.getBoundingClientRect().left,
-							y: elemToDrag.getBoundingClientRect().top
+						const elemToDrag = itemToDrag.getElem();
+						const elemToDragComputedStyle
+							= getComputedStyle(elemToDrag);
+						const elemToDragParentElemRelativePosition = {
+							x: Number.parseFloat(elemToDragComputedStyle.left),
+							y: Number.parseFloat(elemToDragComputedStyle.top)
 						};
-						const newCursorShift = {
-							width: dragStartPosition.x - elemToDragPosition.x,
-							height: dragStartPosition.y - elemToDragPosition.y
-						};
-						cursorShift.width = newCursorShift.width;
-						cursorShift.height = newCursorShift.height;
+
+						shift.horizontal
+							= elemToDragParentElemRelativePosition.x
+							+ elemToDropOntoClientPosition.x
+							- dragStartClientPosition.x;
+						shift.vertical
+							= elemToDragParentElemRelativePosition.y
+							+ elemToDropOntoClientPosition.y
+							- dragStartClientPosition.y;
 
 						item = itemToDrag;
 					})(),
@@ -44,27 +59,39 @@ class DraggingStore {
 						event.preventDefault();
 					})(),
 			endDragging:
-				(elemToDropOnto, draggingEndPosition) =>
+				(elemToDropOnto, dragEndClientPosition) =>
 					elemToDropOnto
-					&& draggingEndPosition
+					&& dragEndClientPosition
 					&& (() => {
-						const dropPosition = {
-							x:
-								draggingEndPosition.x
-								- elemToDropOnto.offsetLeft
-								- cursorShift.width,
-							y:
-								draggingEndPosition.y
-								- elemToDropOnto.offsetTop
-								- cursorShift.height
+						const elemToDropOntoBoundingClientRect
+							= elemToDropOnto.getBoundingClientRect();
+						const elemToDropOntoClientPosition = {
+							x: elemToDropOntoBoundingClientRect.left,
+							y: elemToDropOntoBoundingClientRect.top
 						};
+
+						const dropClientPosition = {
+							x:
+								dragEndClientPosition.x
+								+ shift.horizontal
+								- elemToDropOntoClientPosition.x,
+							y:
+								dragEndClientPosition.y
+								+ shift.vertical
+								- elemToDropOntoClientPosition.y
+						};
+
 						const elem = item.getElem();
-						elem.style.left = `${dropPosition.x}px`;
-						elem.style.top = `${dropPosition.y}px`;
-						// The below is to change the order at which elements
-						//	are rendered so that after dropping the element
-						//	just dropped is always on top (the default order
-						//	is that of the creation of the elements)
+						elem.style.left = `${dropClientPosition.x}px`;
+						elem.style.top = `${dropClientPosition.y}px`;
+
+						// The below appending child is not necessary
+						//	for dragging to work per se. But, it is done
+						//	to change the order at which elements are rendered
+						//	so that, after dropping, the element just dropped is
+						//	always on top (the default order is
+						//	that of the creation of the elements, not the order
+						//	of dropping them).
 						elemToDropOnto.appendChild(elem);
 					})()
 		};

@@ -109,7 +109,7 @@ class Diagram {
 							}
 						);
 					state.draggingStore.startDragging(
-						cursorClientPosition, itemToDrag
+						cursorClientPosition, itemToDrag, diagramAreaElem
 					);
 				}
 			};
